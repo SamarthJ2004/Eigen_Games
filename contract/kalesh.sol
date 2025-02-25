@@ -26,11 +26,19 @@ contract AiFightBetting is ReentrancyGuard, Ownable {
         Bet[] betsPersonality2;
     }
 
+    event FightCreated(address deployed_address, address indexed creator, uint256 startTime, uint256 endTime);
+    event BetPlaced(address indexed bettor, uint256 amount, uint8 personality);
+    event FightFinalized( uint8 winner, uint256 totalPool);
+    event UserPaid(address indexed bettor, uint256 amount);
+
+    Fight public currentFight;
+    uint256 public constant MIN_BET_AMOUNT = 0.001 ether;
+    uint256 public constant PLATFORM_FEE = 2; // 2%
+    uint256 public platformFeesAccumulated;
+    address platformAddress = address(0x34040646ba5166C6Df72Eb82d754AcF9EaCe5724);
+
+
     constructor(uint256 _duration) Ownable(msg.sender) {
-         //fightId = keccak256(abi.encodePacked(block.timestamp, msg.sender));
-        require(!currentFight.isActive, "Fight already exists");
-        
-        
         require(!currentFight.isActive, "Fight already exists");
 
         currentFight.roomCreator = msg.sender;
@@ -43,26 +51,13 @@ contract AiFightBetting is ReentrancyGuard, Ownable {
         currentFight.betAmountBot1 = 0;
         currentFight.betAmountBot2 = 0;
 
-        // No need to initialize dynamic struct arrays explicitly
-
         emit FightCreated(address(this), msg.sender, currentFight.startTime, currentFight.endTime);
     }
     
-    Fight public currentFight;
-    uint256 public constant MIN_BET_AMOUNT = 0.01 ether;
-    uint256 public constant PLATFORM_FEE = 2; // 2%
-    uint256 public platformFeesAccumulated;
-    address platformAddress = address(0x34040646ba5166C6Df72Eb82d754AcF9EaCe5724);
-    
-    event FightCreated(address deployed_address, address indexed creator, uint256 startTime, uint256 endTime);
-    event BetPlaced(address indexed bettor, uint256 amount, uint8 personality);
-    event FightFinalized( uint8 winner, uint256 totalPool);
-    event UserPaid(address indexed bettor, uint256 amount);
 
-   
 
     function placeBet(uint8 personality) external payable nonReentrant {
-        require(msg.value >= MIN_BET_AMOUNT, "Bet amount too low");
+        require(msg.value >= MIN_BET_AMOUNT, "Bet amount too low"); //currently set to .001
         require(personality == 1 || personality == 2, "Invalid personality");
         
         Fight storage fight = currentFight;
@@ -84,6 +79,7 @@ contract AiFightBetting is ReentrancyGuard, Ownable {
 
     function finalizeFight( uint8 winningPersonality) external onlyOwner {
         Fight storage fight = currentFight;
+
         require(fight.isActive, "Fight not active");
         require(!fight.isFinalized, "Fight already finalized");
         require(block.timestamp >= fight.endTime, "Fight not ended");
@@ -124,12 +120,12 @@ contract AiFightBetting is ReentrancyGuard, Ownable {
         }
     }
     
-    // function withdrawPlatformFees() external onlyOwner {
-    //     uint256 fees = platformFeesAccumulated;
-    //     require(fees > 0, "No fees available");
+    function withdrawPlatformFees() external onlyOwner {
+        uint256 fees = platformFeesAccumulated;
+        require(fees > 0, "No fees available");
 
-    //     platformFeesAccumulated = 0;
-    //     (bool success, ) = owner().call{value: fees}("");
-    //     require(success, "Transfer failed");
-    // }
+        platformFeesAccumulated = 0;
+        (bool success, ) = owner().call{value: fees}("");
+        require(success, "Platform fee transfer failed");
+    }
 }
