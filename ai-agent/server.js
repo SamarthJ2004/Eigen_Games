@@ -5,17 +5,17 @@ import {
   generateModelResponse,
 } from "./config.js";
 import { CacheManager, DbCacheAdapter } from "@elizaos/core";
-import { MemoryCache } from "./memoryCache.js";
-import { evaluateBattle } from "./battleEvaluation.js";
-import { constructBattlePrompt, constructInitialMessage } from "./prompt.js";
-import { analyzeResponse } from "./analyza.js";
+import { MemoryCache } from "./utils/memoryCache.js";
+import { evaluateBattle } from "./utils/battleEvaluation.js";
+import { constructBattlePrompt, constructInitialMessage } from "./utils/prompt.js";
+import { analyzeResponse } from "./utils/analyze.js";
 import {
   getDebateData,
   formatDebateResponse,
   getAllDebateIds,
   getDebateHistory,
-} from "./debateManager.js";
-import parseResponseParts from "./parser.js";
+} from "./utils/debateManager.js";
+import parseResponseParts from "./utils/parser.js";
 
 const app = express();
 app.use(express.json());
@@ -169,30 +169,30 @@ app.post("/message", async (req, res) => {
   }
 });
 
-// app.get("/battles/:debateId/evaluation", async (req, res) => {
-//   try {
-//     const { debateId } = req.params;
-//     const debateData = await memoryCache.get(`debate:${debateId}`);
+app.get("/battles/:debateId/evaluation", async (req, res) => {
+  try {
+    const { debateId } = req.params;
+    const debateData = await memoryCache.get(`debate:${debateId}`);
 
-//     if (!debateData) {
-//       return res.status(404).json({ error: "Battle not found" });
-//     }
+    if (!debateData) {
+      return res.status(404).json({ error: "Battle not found" });
+    }
 
-//     const debate = JSON.parse(debateData);
+    const debate = JSON.parse(debateData);
 
-//     if (debate.status !== "completed") {
-//       return res.status(400).json({
-//         error: "Battle is still in progress",
-//         timeRemaining: BATTLE_DURATION - (Date.now() - debate.startTime),
-//       });
-//     }
+    if (debate.status !== "completed") {
+      return res.status(400).json({
+        error: "Battle is still in progress",
+        timeRemaining: BATTLE_DURATION - (Date.now() - debate.startTime),
+      });
+    }
 
-//     res.json({ evaluation: debate.evaluation });
-//   } catch (error) {
-//     console.error("Error getting evaluation:", error);
-//     res.status(500).json({ error: error.message });
-//   }
-// });
+    res.json({ evaluation: debate.evaluation });
+  } catch (error) {
+    console.error("Error getting evaluation:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.get("/debates", async (req, res) => {
   try {
