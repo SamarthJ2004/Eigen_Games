@@ -50,9 +50,3 @@ export async function getDebateHistory(debateId, memoryCache) {
     throw new Error(`Error retrieving debate history: ${error.message}`);
   }
 }
-
-export async function validateDebateAccess(debateId, userId, memoryCache) {
-  // You can add access control logic here
-  const debate = await getDebateData(debateId, memoryCache);
-  return debate !== null;
-}

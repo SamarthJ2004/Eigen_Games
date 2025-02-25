@@ -1,4 +1,10 @@
-export function constructBattlePrompt (character, opponent, topic, context, timeRemaining) {
+export function constructBattlePrompt(
+  character,
+  opponent,
+  topic,
+  context,
+  timeRemaining
+) {
   // Get battle persona and style elements
   const battlePersona = character.battlePersona || "Battle Challenger";
   const battleStyle = character.battleStyle || {};
@@ -61,10 +67,12 @@ ${previousExchanges}
 1. Opening: Use your character-specific opening style
 2. Main Roast: Deliver your core attack following your style elements
 3. Callback: Reference a previous exchange if possible
-4. Finish: End with your signature closer
-
 ## Style Requirements:
-- Use your signature patterns (${character.name === 'Modi' ? 'Hindi-English mix, statistics' : 'CAPS, parentheses'})
+- Use your signature patterns (${
+    character.name === "Modi"
+      ? "Hindi-English mix, statistics"
+      : "CAPS, parentheses"
+  })
 - Stay completely in character
 - Use your signature emphasis patterns
 - Include your catchphrases and expressions
@@ -73,10 +81,14 @@ ${previousExchanges}
 - Include hashtags (#) relevant to your burns
 - NO introductions or endings (no "Finally:", no "${character.name}:")
 - Maximum 40 words
-${isEndGame ? '- This is the FINAL PHASE - make it your most devastating roast yet!' : ''}
+${
+  isEndGame
+    ? "- This is the FINAL PHASE - make it your most devastating roast yet!"
+    : ""
+}
 
 Previous Exchange:
-${context.slice(-1)[0]?.content || 'No previous exchange'}
+${context.slice(-1)[0]?.content || "No previous exchange"}
 
 Generate your next roast maintaining complete character authenticity:`;
 }
