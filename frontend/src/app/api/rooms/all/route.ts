@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error in /api/rooms/all:", error);
+    console.error("Error in /api/rooms/all:  hiha   ", error);
 
     // Check if it's a connection error
     if (error instanceof Error && error.message.includes("ECONNREFUSED")) {

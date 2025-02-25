@@ -2,7 +2,6 @@ import Icon from "@/assets/logo.jpg";
 import Link from "next/link";
 import Image from "next/image";
 import Auth from "@/auth/auth";
-import CreateWallet from "../privy/create-wallet";
 import { CircleUserRound } from "lucide-react";
 import Button from "./button";
 
@@ -58,7 +57,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, display, logout, setDisplay }) =>
               >
                 Create Room
               </Link>
-              <CreateWallet />
               <CircleUserRound
                 size={34}
                 onClick={() => setDisplay(!display)}
