@@ -10,12 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export function getTokenForProvider(provider) {
-  // First check for Autonome's API key
-  if (process.env.API_KEY) {
-    return process.env.API_KEY;  // This is what Autonome will provide
-  }
 
-  // Fallback to other sources
   switch (provider) {
     case 'groq':
       return process.env.GROQ_API_KEY;
@@ -186,7 +181,7 @@ export async function loadCharacters(charactersArg) {
 
 export async function generateModelResponse(prompt, character) {
   const token = getTokenForProvider(character.modelProvider);
-  console.log("token: ", token);
+  console.log("token: ", token); 
 
   switch (character.modelProvider) {
     case ModelProviderName.GROQ:

@@ -14,8 +14,8 @@ import {
   formatDebateResponse,
   getAllDebateIds,
   getDebateHistory,
-  validateDebateAccess,
 } from "./debateManager.js";
+import parseResponseParts from "./parser.js";
 
 const app = express();
 app.use(express.json());
@@ -33,10 +33,8 @@ const battleTimers = new Map();
 function startBattleTimer(debateId) {
   const timer = setTimeout(async () => {
     try {
-      // Get battle evaluation from Eliza
       const evaluation = await evaluateBattle(debateId, memoryCache);
 
-      // Store evaluation result
       const debateData = await memoryCache.get(`debate:${debateId}`);
       if (debateData) {
         const debate = JSON.parse(debateData);
@@ -45,7 +43,6 @@ function startBattleTimer(debateId) {
         await memoryCache.set(`debate:${debateId}`, JSON.stringify(debate));
       }
 
-      // Cleanup timer
       battleTimers.delete(debateId);
     } catch (error) {
       console.error(`Error evaluating battle ${debateId}:`, error);
@@ -55,7 +52,6 @@ function startBattleTimer(debateId) {
   battleTimers.set(debateId, timer);
 }
 
-// Main chat endpoint for Autonome
 app.post("/message", async (req, res) => {
   try {
     const { text, userId, context, characters: initialCharacters } = req.body;
@@ -63,14 +59,13 @@ app.post("/message", async (req, res) => {
     let lastCharacter = context?.lastCharacter;
     let characters = context?.characters || initialCharacters;
 
-    // Check if this is a new battle
     if (!debateId) {
       if (!characters || characters.length !== 2) {
         throw new Error("Need exactly two characters to start a roast battle");
       }
 
       const loadedCharacters = await loadCharacters(
-        characters.map((c) => `${c}.character.json`).join(",") // Changed to .json
+        characters.map((c) => `${c}.character.json`).join(",")
       );
 
       debateId = Date.now().toString();
@@ -85,13 +80,11 @@ app.post("/message", async (req, res) => {
       await memoryCache.set(`debate:${debateId}`, JSON.stringify(debateData));
       lastCharacter = loadedCharacters[1].name.toLowerCase();
 
-      // Start battle timer
       startBattleTimer(debateId);
 
       return res.json(constructInitialMessage(debateId, characters, text));
     }
 
-    // Check if battle is still active
     const debateData = await memoryCache.get(`debate:${debateId}`);
     if (!debateData) {
       throw new Error("Battle not found");
@@ -111,13 +104,11 @@ app.post("/message", async (req, res) => {
       });
     }
 
-    // Process the roast exchange
     const nextCharacter =
       lastCharacter === characters[0] ? characters[1] : characters[0];
     const opponent =
       lastCharacter === characters[0] ? characters[0] : characters[1];
 
-    // Load both character files
     const [characterData, opponentData] = await Promise.all([
       loadCharacters(`${nextCharacter}.character.json`), // Changed to .json
       loadCharacters(`${opponent}.character.json`), // Changed to .json
@@ -137,13 +128,13 @@ app.post("/message", async (req, res) => {
 
     const response = await generateModelResponse(prompt, character);
 
-    // Analyze response quality
     const analysis = analyzeResponse(response, character, opponentChar);
 
-    // Add message with analysis
+    const parts = parseResponseParts(response);
+
     debate.messages.push({
       character: character.name,
-      content: response,
+      content: parts,
       timestamp: Date.now(),
       analysis: analysis,
     });
@@ -153,7 +144,7 @@ app.post("/message", async (req, res) => {
     res.json({
       messages: [
         {
-          text: response,
+          text: parts,
           type: "text",
         },
       ],
@@ -162,7 +153,7 @@ app.post("/message", async (req, res) => {
         lastCharacter: nextCharacter,
         characters: characters,
         timeRemaining: BATTLE_DURATION - (Date.now() - debate.startTime),
-        analysis: analysis, // Include analysis in response
+        analysis: analysis,
       },
     });
   } catch (error) {
@@ -178,33 +169,31 @@ app.post("/message", async (req, res) => {
   }
 });
 
-// Get battle evaluation endpoint
-app.get("/battles/:debateId/evaluation", async (req, res) => {
-  try {
-    const { debateId } = req.params;
-    const debateData = await memoryCache.get(`debate:${debateId}`);
+// app.get("/battles/:debateId/evaluation", async (req, res) => {
+//   try {
+//     const { debateId } = req.params;
+//     const debateData = await memoryCache.get(`debate:${debateId}`);
 
-    if (!debateData) {
-      return res.status(404).json({ error: "Battle not found" });
-    }
+//     if (!debateData) {
+//       return res.status(404).json({ error: "Battle not found" });
+//     }
 
-    const debate = JSON.parse(debateData);
+//     const debate = JSON.parse(debateData);
 
-    if (debate.status !== "completed") {
-      return res.status(400).json({
-        error: "Battle is still in progress",
-        timeRemaining: BATTLE_DURATION - (Date.now() - debate.startTime),
-      });
-    }
+//     if (debate.status !== "completed") {
+//       return res.status(400).json({
+//         error: "Battle is still in progress",
+//         timeRemaining: BATTLE_DURATION - (Date.now() - debate.startTime),
+//       });
+//     }
 
-    res.json({ evaluation: debate.evaluation });
-  } catch (error) {
-    console.error("Error getting evaluation:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
+//     res.json({ evaluation: debate.evaluation });
+//   } catch (error) {
+//     console.error("Error getting evaluation:", error);
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
-// Get all debates
 app.get("/debates", async (req, res) => {
   try {
     const debateIds = await getAllDebateIds(memoryCache);
@@ -221,23 +210,9 @@ app.get("/debates", async (req, res) => {
   }
 });
 
-// Get specific debate history
 app.get("/debates/:debateId", async (req, res) => {
   try {
-    const { debateId } = req.params;
-    const userId = req.headers["user-id"]; // Optional: for access control
-
-    // Optional: Validate access
-    if (userId) {
-      const hasAccess = await validateDebateAccess(
-        debateId,
-        userId,
-        memoryCache
-      );
-      if (!hasAccess) {
-        return res.status(403).json({ error: "Access denied" });
-      }
-    }
+    const { debateId } = req.params;  
 
     const debateHistory = await getDebateHistory(debateId, memoryCache);
     res.json(debateHistory);
@@ -251,7 +226,6 @@ app.get("/debates/:debateId", async (req, res) => {
   }
 });
 
-// Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
