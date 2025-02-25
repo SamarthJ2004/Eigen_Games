@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getRoomsByAddress } from "@/lib/db/mongodb";
+import { getRoomById } from "@/lib/db/mongodb";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { address: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const address = (await params).address;
+    console.log("hih")
+    const id = (await params).id;
 
-    if (!address) {
+    if (!id) {
       return NextResponse.json(
-        { error: "Address is required" },
+        { error: "aidddress is required" },
         { status: 400 }
       );
     }
 
-    const rooms = await getRoomsByAddress(address);
+    const rooms = await getRoomById(id);
+    console.log("hihah  ", rooms)
     return NextResponse.json(rooms);
   } catch (error) {
     console.error("Error fetching rooms:", error);

@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { usePrivy } from "@privy-io/react-auth";
+import { ethers } from "ethers";
 import {
   APIContext,
   APIMessage,
@@ -10,8 +12,9 @@ import {
   Message,
   Character,
 } from "@/lib/utils/types/start";
+import {contractABI} from "@/lib/utils/constants/room";
 
-const API_URL = "https://autonome.alt.technology/kaleshai-vmyjuu/message";
+const API_URL = "https://autonome.alt.technology/agent-cdyupj";
 const POLLING_INTERVAL = 15000;
 const DEBATE_DURATION = 180000;
 const TIMER_INTERVAL = 1000;
@@ -36,6 +39,10 @@ const Integration: React.FC = () => {
   const lastCharacterRef = useRef<Character | null>(null);
   const [debateEnded, setDebateEnded] = useState(false);
   const debateTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const { login, logout, user, ready } = usePrivy();
+  const [userAddress, setUserAddress] = useState<string | null>(null);
+  const [provider, setProvider] =
+      useState<ethers.providers.Web3Provider | null>(null);
 
   const updateLocalTimer = useCallback(() => {
     setTimeRemaining((prev) => {
@@ -54,6 +61,7 @@ const Integration: React.FC = () => {
       return prev - 1000;
     });
   }, [debateEnded]);
+  
 
   const fetchEvaluation = async () => {
     try {
