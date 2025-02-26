@@ -21,7 +21,6 @@ import {
   getAllDebateIds,
   getDebateHistory,
 } from "./utils/debateManager.js";
-import parseResponseParts from "./utils/parser.js";
 
 const app = express();
 app.use(express.json());
@@ -31,7 +30,7 @@ const memoryCache = new MemoryCache();
 const cache = new CacheManager(new DbCacheAdapter(memoryCache, "debate"));
 
 const PORT = process.env.PORT || 3000;
-const BATTLE_DURATION = 60 * 1000; // 3 minutes in milliseconds
+const BATTLE_DURATION = 3 * 60 * 1000; // 3 minutes in milliseconds
 
 // Track battle timers
 const battleTimers = new Map();
@@ -133,14 +132,21 @@ app.post("/message", async (req, res) => {
     );
 
     const response = await generateModelResponse(prompt, character);
+    console.log("reponse of evaluation : ", response);
+
+    let evalationJson;
+    try {
+      evalationJson = JSON.parse(response);
+    } catch (parseError) {
+      console.log("Error parsing JSON repsonse: ", parseError);
+      evalationJson = response;
+    }
 
     const analysis = analyzeResponse(response, character, opponentChar);
 
-    const parts = parseResponseParts(response);
-
     debate.messages.push({
       character: character.name,
-      content: parts,
+      content: evalationJson,
       timestamp: Date.now(),
       analysis: analysis,
     });
@@ -150,7 +156,7 @@ app.post("/message", async (req, res) => {
     res.json({
       messages: [
         {
-          text: parts,
+          text: evalationJson,
           type: "text",
         },
       ],

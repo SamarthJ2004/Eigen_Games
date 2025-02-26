@@ -15,7 +15,6 @@ export function constructBattlePrompt(
   const responsePatterns = character.responsePatterns || {};
   const standardResponses = responsePatterns.standard_topics || [];
   const comebacks = responsePatterns.signature_comebacks || {};
-
   const isEndGame = timeLeft <= 30;
 
   // Get core identity
@@ -43,7 +42,6 @@ ${identity}
 ## Your Battle Style & Signature Moves
 Formatting Rules:
 ${signatureMoves.formatting?.join("\n") || character.style.all.join("\n")}
-
 Delivery Pattern:
 ${signatureMoves.delivery?.join("\n") || ""}
 
@@ -59,7 +57,6 @@ ${Object.entries(comebacks)
 
 ## Battle Context
 Topic: ${topic}
-
 Previous Exchanges:
 ${previousExchanges}
 
@@ -67,6 +64,7 @@ ${previousExchanges}
 1. Opening: Use your character-specific opening style
 2. Main Roast: Deliver your core attack following your style elements
 3. Callback: Reference a previous exchange if possible
+
 ## Style Requirements:
 - Use your signature patterns (${
     character.name === "Modi"
@@ -90,7 +88,28 @@ ${
 Previous Exchange:
 ${context.slice(-1)[0]?.content || "No previous exchange"}
 
-Generate your next roast maintaining complete character authenticity:`;
+## OUTPUT FORMAT REQUIREMENT:
+Return ONLY a valid JSON object with the following structure. Do not include any explanation, markdown formatting, or text outside of this JSON:
+
+{
+  "roast": "Your complete roast text with all character-specific formatting and style intact",
+  "components": {
+    "opening": "Your character-specific opening",
+    "mainRoast": "Your core attack following style elements",
+    "callback": "Reference to a previous exchange (if applicable)"
+  },
+  "metadata": {
+    "character": "${character.name}",
+    "opponent": "${opponent.name}",
+    "styleElements": ["list of style elements you used"],
+    "callbacks": ["specific callbacks to previous exchanges"],
+    "signature_patterns": ["specific signature patterns used"],
+    "wordCount": [word count as number],
+    "hashtags": ["hashtags used in the roast"]
+  }
+}
+
+Generate your next roast maintaining complete character authenticity, but ONLY return the JSON object described above:`;
 }
 
 export function constructInitialMessage(debateId, characters, topic) {
