@@ -6,8 +6,14 @@ import {
 } from "./config.js";
 import { CacheManager, DbCacheAdapter } from "@elizaos/core";
 import { MemoryCache } from "./utils/memoryCache.js";
-import { evaluateBattle } from "./utils/battleEvaluation.js";
-import { constructBattlePrompt, constructInitialMessage } from "./utils/prompt.js";
+import {
+  getBattleEvaluation,
+  evaluateBattle,
+} from "./utils/battleEvaluation.js";
+import {
+  constructBattlePrompt,
+  constructInitialMessage,
+} from "./utils/prompt.js";
 import { analyzeResponse } from "./utils/analyze.js";
 import {
   getDebateData,
@@ -25,7 +31,7 @@ const memoryCache = new MemoryCache();
 const cache = new CacheManager(new DbCacheAdapter(memoryCache, "debate"));
 
 const PORT = process.env.PORT || 3000;
-const BATTLE_DURATION = 3 * 60 * 1000; // 3 minutes in milliseconds
+const BATTLE_DURATION = 60 * 1000; // 3 minutes in milliseconds
 
 // Track battle timers
 const battleTimers = new Map();
@@ -172,8 +178,9 @@ app.post("/message", async (req, res) => {
 app.get("/battles/:debateId/evaluation", async (req, res) => {
   try {
     const { debateId } = req.params;
-    const debateData = await memoryCache.get(`debate:${debateId}`);
+    const { format } = req.query; // Optional format parameter (json or full)
 
+    const debateData = await memoryCache.get(`debate:${debateId}`);
     if (!debateData) {
       return res.status(404).json({ error: "Battle not found" });
     }
@@ -187,9 +194,53 @@ app.get("/battles/:debateId/evaluation", async (req, res) => {
       });
     }
 
-    res.json({ evaluation: debate.evaluation });
+    // Get evaluation in structured format
+    const evaluationJson = await getBattleEvaluation(debateId, memoryCache);
+
+    // If client requested simple format, return minimal info
+    if (format === "simple") {
+      return res.json({
+        winner: evaluationJson.result.winner,
+        margin: evaluationJson.result.margin,
+        contestant1: {
+          name: evaluationJson.battle.contestants[0],
+          score:
+            evaluationJson.scorecards[evaluationJson.battle.contestants[0]]
+              ?.totalScore || 0,
+        },
+        contestant2: {
+          name: evaluationJson.battle.contestants[1],
+          score:
+            evaluationJson.scorecards[evaluationJson.battle.contestants[1]]
+              ?.totalScore || 0,
+        },
+      });
+    }
+
+    // Otherwise return the full evaluation
+    res.json(evaluationJson);
   } catch (error) {
     console.error("Error getting evaluation:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Force re-evaluation of a battle (admin endpoint)
+app.post("/battles/:debateId/evaluate", async (req, res) => {
+  try {
+    const { debateId } = req.params;
+    const debateData = await memoryCache.get(`debate:${debateId}`);
+
+    if (!debateData) {
+      return res.status(404).json({ error: "Battle not found" });
+    }
+
+    // Force a re-evaluation
+    const evaluationJson = await evaluateBattle(debateId, memoryCache);
+
+    res.json(evaluationJson);
+  } catch (error) {
+    console.error("Error during forced evaluation:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -212,7 +263,7 @@ app.get("/debates", async (req, res) => {
 
 app.get("/debates/:debateId", async (req, res) => {
   try {
-    const { debateId } = req.params;  
+    const { debateId } = req.params;
 
     const debateHistory = await getDebateHistory(debateId, memoryCache);
     res.json(debateHistory);

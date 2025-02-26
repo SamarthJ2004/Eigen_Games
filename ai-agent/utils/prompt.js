@@ -98,16 +98,16 @@ export function constructInitialMessage(debateId, characters, topic) {
     messages: [
       {
         text:
-          `🔥 ROAST BATTLE INITIALIZED 🔥\n\n` +
-          `Topic: ${topic}\n` +
-          `Contestants: ${characters.join(" vs ")}\n` +
-          `Duration: 3 minutes\n` +
-          `Judge: Eliza\n\n` +
-          `Battle Rules:\n` +
-          `- Stay in character\n` +
-          `- Keep responses under 4 lines\n` +
-          `- Reference previous burns when possible\n` +
-          `Let the roasting begin! 🎤\n\n` +
+          `🔥 ROAST BATTLE INITIALIZED 🔥<br></br>` +
+          `Topic: ${topic}<br></br>` +
+          `Contestants: ${characters.join(" vs ")}<br></br>` +
+          `Duration: 3 minutes<br></br>` +
+          `Judge: Eliza<br></br><br></br>` +
+          `Battle Rules:<br></br>` +
+          `- Stay in character<br></br>` +
+          `- Keep responses under 4 lines<br></br>` +
+          `- Reference previous burns when possible<br></br>` +
+          `Let the roasting begin! 🎤<br></br><br></br>` +
           `First up: ${characters[0]}!`,
         type: "text",
       },
