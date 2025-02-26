@@ -3,7 +3,7 @@ import { IRoom, Room } from "./models/Room";
 import 'dotenv/config';
 
 const MONGODB_URI = process.env.MONGODB_URI;
-console.log("hihaaaaaaaaaaaaaaaaaaaaaaaaaaaa ",process.env.MONGODB_URI)
+
 if (!MONGODB_URI) {
   throw new Error(
     "Please define the MONGODB_URI environment variable inside .env.local"
@@ -35,6 +35,7 @@ export async function connectDB() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.log("cached connection issue \n");
     throw e;
   }
 
