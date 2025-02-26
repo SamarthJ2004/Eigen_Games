@@ -137,7 +137,7 @@ export default function LiveChat() {
       {/* Toggle Button */}
       <button
         onClick={() => setIsMinimized(!isMinimized)}
-        className="absolute left-0 top-20 transform -translate-x-1/2 -translate-y-1/2 bg-blue-600 p-2 rounded-full shadow-md hover:bg-blue-700 transition-colors duration-150 z-10 group"
+        className="absolute left-0 top-20 transform -translate-x-1/2 -translate-y-1/2 bg-purple-700 p-2 rounded-full shadow-md hover:bg-purple-600 transition-colors duration-150 z-10 group"
       >
         {isMinimized ? (
           <div className="relative">
