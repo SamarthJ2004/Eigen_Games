@@ -134,6 +134,10 @@ export default function Room() {
 
       const contractAddress = await deployRoomContract(roomId);
 
+      if (roomLink && contractAddress) {
+        router.push(roomLink);
+      }
+
       const details = {
         id: roomId,
         link: roomLink,
@@ -253,7 +257,7 @@ export default function Room() {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="flex flex-col gap-6 space-y-6">
                 <div>
                   <label
                     htmlFor="topic"
@@ -359,9 +363,7 @@ export default function Room() {
             </div>
           </div>
 
-          <div className="h-10 w-full opacity-0">
-            gap
-          </div>
+          <div className="h-10 w-full opacity-0">gap</div>
         </main>
       </div>
       <Footer />
