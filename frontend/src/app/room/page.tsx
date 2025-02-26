@@ -43,7 +43,7 @@ export default function Room() {
   const fetchRooms = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/rooms/${userAddress}`);
+      const response = await fetch(`/api/rooms/address/${userAddress}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
