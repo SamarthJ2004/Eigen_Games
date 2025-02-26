@@ -13,8 +13,9 @@ import {
   Character,
 } from "@/lib/utils/types/start";
 import {contractABI} from "@/lib/utils/constants/room";
+import "dotenv/config";
 
-const API_URL = "https://autonome.alt.technology/agent-cdyupj";
+const API_URL = process.env.NEXT_PUBLIC_AUTONOME_API;
 const POLLING_INTERVAL = 15000;
 const DEBATE_DURATION = 180000;
 const TIMER_INTERVAL = 1000;
