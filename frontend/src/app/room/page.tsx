@@ -13,6 +13,7 @@ import {
 import Navbar from "@/components/common-components/navbar";
 import { usePrivy } from "@privy-io/react-auth";
 import Footer from "@/components/common-components/footer";
+import  { useRouter} from "next/navigation";
 
 export default function Room() {
   const { login, logout, user, ready } = usePrivy();
@@ -27,6 +28,8 @@ export default function Room() {
   const [userAddress, setUserAddress] = useState<string | null>(null);
   const [provider, setProvider] =
     useState<ethers.providers.Web3Provider | null>(null);
+  
+  const router = useRouter();
 
   // Connect wallet on component mount
   useEffect(() => {
@@ -186,7 +189,7 @@ export default function Room() {
             count={300}
             gravity={1}
             friction={0.8}
-            wallBounce={5}
+            wallBounce={2}
             followCursor={false}
             colors={[[230, 200, 255], 221, 100, 255]}
             maxSize={0.8}
