@@ -1,12 +1,5 @@
-// battleEvaluation.js
-import { loadCharacters, generateModelResponse } from "../config.js";
+import { loadCharacters, generateModelResponse } from "./config.js";
 
-/**
- * Constructs a prompt that requests the evaluation in JSON format directly
- * @param {Object} battleData - The battle data from the cache
- * @param {Object} elizaCharacter - The Eliza character configuration
- * @returns {String} The formatted judging prompt
- */
 function constructJsonEvaluationPrompt(battleData, elizaCharacter) {
   const rounds = battleData.messages;
   const contestants = [...new Set(rounds.map((r) => r.character))];
@@ -75,7 +68,7 @@ Evaluate this battle using your technical analysis skills, but ONLY return your 
   }
 }
 
-Important: Return ONLY the JSON object, with no additional text, explanations, or code blocks around it. The response must be valid JSON that can be parsed directly.
+Important: Return ONLY the JSON object, with no additional text, explanations, or code blocks around it. The response must be valid JSON that can be parsed directly. So, make sure to fill all fields.
 Remember:
 1. Use numerical scores (1-10)
 2. Calculate totals accurately
@@ -84,15 +77,8 @@ Remember:
 5. Stay in Eliza's technical analyst persona`;
 }
 
-/**
- * Evaluates a battle using the AI and returns structured results directly in JSON
- * @param {String} debateId - The ID of the debate to evaluate
- * @param {Object} memoryCache - The memory cache instance
- * @returns {Promise<Object>} The evaluation result as JSON
- */
 async function evaluateBattle(debateId, memoryCache) {
   try {
-    // Get the battle data from cache
     const debateData = await memoryCache.get(`debate:${debateId}`);
     if (!debateData) {
       throw new Error("Battle not found");
@@ -105,10 +91,8 @@ async function evaluateBattle(debateId, memoryCache) {
       return battle.evaluationJson;
     }
 
-    // Load the Eliza character for judging
     const elizaCharacter = await loadCharacters("eliza.character.json");
 
-    // Generate the evaluation in JSON format directly
     const evaluationPrompt = constructJsonEvaluationPrompt(
       battle,
       elizaCharacter[0]
@@ -120,19 +104,16 @@ async function evaluateBattle(debateId, memoryCache) {
 
     let evaluationJson;
     try {
-      // Parse the response as JSON
       evaluationJson = JSON.parse(jsonResponse);
       console.log("Successfully parsed evaluation JSON");
     } catch (parseError) {
       console.error("Error parsing JSON response:", parseError);
-      // If JSON parsing fails, create a minimal object with the raw response
       evaluationJson = {
         error: "Failed to parse evaluation JSON",
         rawResponse: jsonResponse,
       };
     }
 
-    // Update the battle data with evaluation results
     battle.evaluationJson = evaluationJson;
     battle.status = "completed";
 
@@ -140,7 +121,6 @@ async function evaluateBattle(debateId, memoryCache) {
       battle.winner = evaluationJson.result.winner;
     }
 
-    // Save the updated battle data
     await memoryCache.set(`debate:${debateId}`, JSON.stringify(battle));
 
     return evaluationJson;
@@ -153,12 +133,6 @@ async function evaluateBattle(debateId, memoryCache) {
   }
 }
 
-/**
- * Gets the evaluation results for a completed battle
- * @param {String} debateId - The ID of the debate
- * @param {Object} memoryCache - The memory cache instance
- * @returns {Promise<Object>} The evaluation result as JSON
- */
 async function getBattleEvaluation(debateId, memoryCache) {
   try {
     const debateData = await memoryCache.get(`debate:${debateId}`);
@@ -172,7 +146,6 @@ async function getBattleEvaluation(debateId, memoryCache) {
       throw new Error("Battle has not been evaluated yet");
     }
 
-    // If the battle has a JSON evaluation, return it
     if (battle.evaluationJson) {
       return battle.evaluationJson;
     }

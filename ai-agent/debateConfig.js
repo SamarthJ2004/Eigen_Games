@@ -1,4 +1,4 @@
-import { loadCharacters, getTokenForProvider } from "../config.js";
+import { loadCharacters, getTokenForProvider } from "./config.js";
 
 export async function initializeDebateConfig(characterFiles, topic) {
   const characters = await loadCharacters(characterFiles);

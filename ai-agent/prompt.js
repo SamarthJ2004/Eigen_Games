@@ -9,7 +9,7 @@ export function constructBattlePrompt(
   const battlePersona = character.battlePersona || "Battle Challenger";
   const battleStyle = character.battleStyle || {};
   const signatureMoves = battleStyle.signature_elements || {};
-  const timeLeft = Math.floor(timeRemaining / 1000); // Convert to seconds
+  const timeLeft = Math.floor(timeRemaining / 1000);
 
   // Get response patterns
   const responsePatterns = character.responsePatterns || {};

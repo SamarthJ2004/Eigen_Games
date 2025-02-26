@@ -5,27 +5,20 @@ import {
   generateModelResponse,
 } from "./config.js";
 import { CacheManager, DbCacheAdapter } from "@elizaos/core";
-import { MemoryCache } from "./utils/memoryCache.js";
-import {
-  getBattleEvaluation,
-  evaluateBattle,
-} from "./utils/battleEvaluation.js";
-import {
-  constructBattlePrompt,
-  constructInitialMessage,
-} from "./utils/prompt.js";
-import { analyzeResponse } from "./utils/analyze.js";
+import { MemoryCache } from "./memoryCache.js";
+import { getBattleEvaluation, evaluateBattle } from "./battleEvaluation.js";
+import { constructBattlePrompt, constructInitialMessage } from "./prompt.js";
+import { analyzeResponse } from "./analyze.js";
 import {
   getDebateData,
   formatDebateResponse,
   getAllDebateIds,
   getDebateHistory,
-} from "./utils/debateManager.js";
+} from "./debateManager.js";
 
 const app = express();
 app.use(express.json());
 
-// Initialize memory cache
 const memoryCache = new MemoryCache();
 const cache = new CacheManager(new DbCacheAdapter(memoryCache, "debate"));
 
@@ -38,7 +31,7 @@ const battleTimers = new Map();
 function startBattleTimer(debateId) {
   const timer = setTimeout(async () => {
     try {
-      const evaluation = await evaluateBattle(debateId, memoryCache);
+      let evaluation = await evaluateBattle(debateId, memoryCache);
 
       const debateData = await memoryCache.get(`debate:${debateId}`);
       if (debateData) {
@@ -100,9 +93,7 @@ app.post("/message", async (req, res) => {
       return res.json({
         messages: [
           {
-            text:
-              "Battle has ended! Here's Eliza's evaluation:\n\n" +
-              debate.evaluation,
+            text: "Battle has ended!",
             type: "text",
           },
         ],
@@ -115,8 +106,8 @@ app.post("/message", async (req, res) => {
       lastCharacter === characters[0] ? characters[0] : characters[1];
 
     const [characterData, opponentData] = await Promise.all([
-      loadCharacters(`${nextCharacter}.character.json`), // Changed to .json
-      loadCharacters(`${opponent}.character.json`), // Changed to .json
+      loadCharacters(`${nextCharacter}.character.json`),
+      loadCharacters(`${opponent}.character.json`),
     ]);
 
     const character = characterData[0];
@@ -132,21 +123,20 @@ app.post("/message", async (req, res) => {
     );
 
     const response = await generateModelResponse(prompt, character);
-    console.log("reponse of evaluation : ", response);
+    let parsedResponse;
 
-    let evalationJson;
     try {
-      evalationJson = JSON.parse(response);
+      parsedResponse = JSON.parse(response);
     } catch (parseError) {
       console.log("Error parsing JSON repsonse: ", parseError);
-      evalationJson = response;
+      parsedResponse = response;
     }
 
     const analysis = analyzeResponse(response, character, opponentChar);
 
     debate.messages.push({
       character: character.name,
-      content: evalationJson,
+      content: parsedResponse,
       timestamp: Date.now(),
       analysis: analysis,
     });
@@ -156,7 +146,7 @@ app.post("/message", async (req, res) => {
     res.json({
       messages: [
         {
-          text: evalationJson,
+          text: parsedResponse,
           type: "text",
         },
       ],
@@ -184,7 +174,7 @@ app.post("/message", async (req, res) => {
 app.get("/battles/:debateId/evaluation", async (req, res) => {
   try {
     const { debateId } = req.params;
-    const { format } = req.query; // Optional format parameter (json or full)
+    const { format } = req.query;
 
     const debateData = await memoryCache.get(`debate:${debateId}`);
     if (!debateData) {
@@ -200,7 +190,6 @@ app.get("/battles/:debateId/evaluation", async (req, res) => {
       });
     }
 
-    // Get evaluation in structured format
     const evaluationJson = await getBattleEvaluation(debateId, memoryCache);
 
     // If client requested simple format, return minimal info
