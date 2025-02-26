@@ -19,106 +19,110 @@ export default function BattleRoyale() {
   const [error, setError] = useState("");
   const [selectedBot, setSelectedBot] = useState<string | number>("");
   const [txHash, setTxHash] = useState("");
+  const [contractAddress, setContractAddress] = useState<string | null>(null);
+  const [room, setRoom] = useState<IRoom>();
+  const [amount , setAmount] = useState("");
+  const [provider, setProvider] =
+  useState<ethers.providers.Web3Provider | null>(null);
   const [userAddress, setUserAddress] = useState<string | null>(null);
-  const [rooms, setRooms] = useState<IRoom[]>([]);
 
   const params = useParams();
   const roomId = params.id;
 
-  // useEffect(() => {
-  // 	if (typeof roomId === 'string') {
-  // 		console.log("inside useEE  ",roomId);
-  // 		fetchData(roomId);
-  // 	} else {
-  // 		console.error('Invalid roomId:', roomId);
-  // 	}
-  //   }, [roomId]);
-
-  //   const fetchData = async(roomId: string) => {
-  // 	setIsLoading(true);
-  // 	try {
-  // 	  const response = await fetch(`/api/rooms/${roomId}`,{
-  // 		method: "GET",
-  // 		headers: {
-  // 			'Content-Type': 'application/json'
-  // 		}
-  // 	  });
-
-  // 	  if (!response.ok) {
-  // 		if (response.status === 404) {
-  // 		  throw new Error('Room not found');
-  // 		}
-  // 		throw new Error(`HTTP error! status: ${response.status}`);
-  // 	  }
-
-  // 	  const data = await response.json();
-  // 	  console.log("Fetched room data:", data); // Debug log
-  // 	  setRoom(data);
-  // 	} catch (error) {
-  // 	  console.error("Error fetching room:", error);
-  // 	  setError(error instanceof Error ? error.message : "Failed to load room");
-  // 	  setRoom(undefined);
-  // 	} finally {
-  // 	  setIsLoading(false);
-  // 	}
-  //   };
-
-  //_----------------------------------
-
   useEffect(() => {
-    if (!userAddress) return;
+		if (typeof roomId === 'string') {
+			console.log("inside useEE  ",roomId);
+			fetchData(roomId);
+		} else {
+			console.error('Invalid roomId:', roomId);
+		}
 
-    fetchRooms();
-  }, [userAddress]);
+    connectWallet();
+	  }, [roomId]);
 
-  const fetchRooms = async () => {
+	  const fetchData = async(roomId: string) => {
+        setIsLoading(true);
+        try {
+          const response = await fetch(`/api/rooms/id/${roomId}`,{
+          method: "GET",
+          headers: {
+            'Content-Type': 'application/json'  
+          }
+          });
+          
+          if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Room not found');
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const room = await response.json();
+          console.log("Fetched room data:", room); // Debug log
+          setContractAddress(room.contractAddress)
+          setRoom(room);
+        } catch (error) {
+          console.error("Error fetching room:", error);
+          setError(error instanceof Error ? error.message : "Failed to load room");
+          setRoom(undefined);
+        } finally {
+          setIsLoading(false);
+		  }
+	  };
+
+    // Connect MetaMask wallet
+  const connectWallet = async () => {
+    if (typeof window.ethereum === "undefined") {
+      setError("Please install MetaMask to continue.");
+      return;
+    }
+
     try {
-      setIsLoading(true);
-      const response = await fetch(`/api/rooms/${userAddress}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setRooms(data);
+      const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      setUserAddress(accounts[0]);
+      setProvider(web3Provider);
+      setError("");
     } catch (error) {
-      console.error("Error fetching rooms:", error);
-      setError("Failed to load rooms. Please try again later.");
-    } finally {
-      setIsLoading(false);
+      console.error("Error connecting to MetaMask:", error);
+      setError("Failed to connect wallet. Please try again.");
     }
   };
 
-  async function sendTransaction(botNumber: number) {
-    try {
-      const contractInterface = new ethers.utils.Interface(contractABI);
-      const metaData = contractInterface.encodeFunctionData("placeBet", [
-        botNumber,
-      ]);
+    async function sendTransaction(botNumber: number) {
+       if (!provider || !userAddress) {
+             throw new Error("Wallet not connected");
+           }
+       
+           try {
+             const signer = provider.getSigner();
+             
+            console.log("contract addresss  ",contractAddress )
+             if(contractAddress){
 
-      const response = await fetch("/api/send-transaction", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          metaData: metaData,
-          to: contractAddress, // Replace with recipient address
-          amount: ethers.utils.parseEther("0.00025").toString(), // Amount in ETH
-        }),
-      });
-
-      const data = await response.json();
-      console.log("trnx successful ", data.txHash);
-
-      if (response.ok) {
-        setTxHash(data.txHash);
-      } else {
-        console.log(data.error);
-        alert("Error: " + data.error);
-      }
-    } catch (error) {
-      console.error("Network error:", error);
-      alert("Network error");
+                const contract =  new ethers.Contract(contractAddress, contractABI, signer);
+              
+                try {
+              
+                  const tx = await contract.placeBet(botNumber, {
+                      value: ethers.utils.parseEther(amount) // Convert ETH to wei
+                  });
+                 
+                  await tx.wait(); // Wait for the transaction to be confirmed
+                  console.log("Transaction Hash:", tx.hash);
+              } catch (error) {
+                  console.error("Transaction failed:", error);
+              }
+                console.log("Waiting for trnx to be sent...");
+                
+                return contract.address;}
+           } catch (error) {
+             console.error("Contract deployment failed:", error);
+             throw error;
+           }
     }
-  }
 
   const getBetButtonText = (botNumber: number) => {
     return `Bet on Bot ${botNumber}`;
@@ -177,7 +181,18 @@ export default function BattleRoyale() {
                         </button>
 
                         {error && <p className="text-red-500">{error}</p>}
-
+                        <div className="flex flex-col sm:flex-row gap-2 w-1/2 max-w-sm">
+                          <input
+                            type="text"
+                            value={amount}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9.]/g, "");
+                              setAmount(value);
+                            }}
+                            placeholder="Enter ETH amount"
+                            className="flex-1 px-4 py-2 border rounded-xl outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          />
+                          </div>
                         <button
                           onClick={() => sendTransaction(1)}
                           className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors
@@ -240,5 +255,6 @@ export default function BattleRoyale() {
         </div>
       </div>
     </div>
+    
   );
 }

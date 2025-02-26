@@ -12,11 +12,11 @@ export default function Auth() {
     <div>
       {user ? (
         <div>
-          <Button text={"Acc: ..." + user.wallet?.address.slice(38, 42)} />
+          <p>{"Acc: ..." + user.wallet?.address.slice(38, 42)}</p>
           <Button onClick={logout} text="Logout" />
         </div>
       ) : (
-        <Button onClick={login} text="Login with Privy" />
+        <Button onClick={login} text="Connect Wallet" />
       )}
     </div>
   );
