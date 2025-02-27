@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { APIResponse, Message, Character } from "@/lib/utils/types/start";
 import "dotenv/config";
 import { IRoom } from "@/lib/db/models/Room";
+import BattleResults from "./battleResults";
 import Image from "next/image";
 import modi from "@/assets/modi.png";
 import trump from "@/assets/trump.png";
@@ -56,8 +57,9 @@ const Integration = ({ room }: { room: IRoom }) => {
         `${process.env.NEXT_PUBLIC_AUTONOME_API}/battles/${debateIdRef.current}/evaluation`
       );
       const data = await res.json();
-      if (data.evaluation) {
-        setResult(data.evaluation);
+      console.log("Evaluation data: ", data);
+      if (data) {
+        setResult(data);
       } else {
         setTimeout(fetchEvaluation, 2000);
       }
@@ -332,7 +334,7 @@ const Integration = ({ room }: { room: IRoom }) => {
     <Card className="w-full max-w-5xl mx-auto">
       <CardContent className="p-6">
         <div className="mb-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold">{room?.topic}</h2>
+          <h2 className="text-2xl font-bold">{room?.topic.toUpperCase()}</h2>
           <div className="flex items-center gap-4">
             {timeRemaining !== null && (
               <span className="text-sm font-medium">
@@ -346,9 +348,7 @@ const Integration = ({ room }: { room: IRoom }) => {
           <Alert className="mb-4">
             <AlertDescription>
               Debate has ended!{" "}
-              {result && (
-                <div className="mt-2">Result: {JSON.stringify(result)}</div>
-              )}
+              {result && <BattleResults battleData={result} />}
             </AlertDescription>
           </Alert>
         )}
