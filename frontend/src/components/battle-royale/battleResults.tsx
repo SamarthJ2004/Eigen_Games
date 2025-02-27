@@ -2,50 +2,7 @@ import React from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const BattleResults = () => {
-  const battleData = {
-    battle: {
-      contestants: ["modi", "trump"],
-      technicalAnalysis:
-        "Close battle with solid roasts and character consistency, but Trump's roast quality slightly edged out Tate's battle flow.",
-    },
-    scorecards: {
-      modi: {
-        characterAuthenticity: 8,
-        roastQuality: 7,
-        battleFlow: 8,
-        totalScore: 23,
-      },
-      trump: {
-        characterAuthenticity: 8,
-        roastQuality: 9,
-        battleFlow: 7,
-        totalScore: 24,
-      },
-    },
-    highlights: {
-      bestBurns: [
-        {
-          character: "modi",
-          burn: '"English: a bunch of hash-tagged broken promises."',
-        },
-        {
-          character: "trump",
-          burn: '"Hindi is so insecure, even your fans can\'t access it." ',
-        },
-      ],
-      bestCallback: "None",
-    },
-    result: {
-      winner: "Trump",
-      margin: 1,
-      winningFactor: "Higher roast quality",
-    },
-    finalRemarks: {
-      modi: "Improve roast quality to match battle flow consistency.",
-      trump: "Maintain strong roast quality and work on smoother battle flow.",
-    },
-  };
+const BattleResults = (battleData) => {
   const getContestantName = (name) => {
     return name.charAt(0).toUpperCase() + name.slice(1);
   };

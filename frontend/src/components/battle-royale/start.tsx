@@ -344,10 +344,11 @@ const Integration = ({ room }: { room: IRoom }) => {
           </div>
         </div>
 
-        {true && (
+        {debateEnded && (
           <Alert className="mb-4">
             <AlertDescription>
-              Debate has ended! {<BattleResults />}
+              Debate has ended!{" "}
+              {result && <BattleResults battleData={result} />}
             </AlertDescription>
           </Alert>
         )}
