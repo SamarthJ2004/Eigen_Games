@@ -12,15 +12,16 @@ import {
   Message,
   Character,
 } from "@/lib/utils/types/start";
-import {contractABI} from "@/lib/utils/constants/room";
+import { contractABI } from "@/lib/utils/constants/room";
 import "dotenv/config";
+import { IRoom } from "@/lib/db/models/Room";
 
 const API_URL = process.env.NEXT_PUBLIC_AUTONOME_API || "";
 const POLLING_INTERVAL = 15000;
 const DEBATE_DURATION = 180000;
 const TIMER_INTERVAL = 1000;
 
-const Integration: React.FC = () => {
+const Integration = (room: IRoom) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +44,7 @@ const Integration: React.FC = () => {
   const { login, logout, user, ready } = usePrivy();
   const [userAddress, setUserAddress] = useState<string | null>(null);
   const [provider, setProvider] =
-      useState<ethers.providers.Web3Provider | null>(null);
+    useState<ethers.providers.Web3Provider | null>(null);
 
   const updateLocalTimer = useCallback(() => {
     setTimeRemaining((prev) => {
@@ -62,7 +63,6 @@ const Integration: React.FC = () => {
       return prev - 1000;
     });
   }, [debateEnded]);
-  
 
   const fetchEvaluation = async () => {
     try {
@@ -156,6 +156,14 @@ const Integration: React.FC = () => {
     [lastCharacter, lastCharacterRef]
   );
 
+  const giveBots = (characters) => {
+    return characters.map((name) => {
+      const nameParts = name.split(" ");
+      const lastName = nameParts[nameParts.length - 1];
+      return lastName.toLowerCase();
+    });
+  };
+
   const pollDebateStatus = useCallback(async () => {
     if (!debateIdRef.current || debateStatusRef.current !== "active") {
       console.log("deabteId not found");
@@ -169,15 +177,17 @@ const Integration: React.FC = () => {
       console.log("inside pollDebateStatus ");
       console.log("lastCharacterRef.current ", lastCharacterRef.current);
       console.log("DebateId", debateIdRef.current);
-      const data = (await makeApiRequest(API_URL+"/message", {
+      const bots = giveBots(room.bots);
+      const data = (await makeApiRequest(API_URL + "/message", {
         method: "POST",
         body: JSON.stringify({
           text: "",
           userId: "user",
           context: {
             debateId: debateIdRef.current,
-            lastCharacter: lastCharacterRef.current || "musk",
-            characters: ["musk", "tate"],
+            lastCharacter:
+              lastCharacterRef.current == bots[0] ? bots[0] : bots[1],
+            characters: bots,
           },
         }),
       })) as APIResponse;
@@ -196,12 +206,13 @@ const Integration: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      lastCharacterRef.current = "musk";
-      const data = (await makeApiRequest(API_URL+"/message", {
+      const bots = giveBots(room.bots);
+      lastCharacterRef.current = bots[0] as Character;
+      const data = (await makeApiRequest(API_URL + "/message", {
         method: "POST",
         body: JSON.stringify({
-          text: "Tesla vs Whey Protein",
-          characters: ["musk", "tate"],
+          text: room.topic,
+          characters: bots,
           userId: "user",
         }),
       })) as APIResponse;
@@ -266,7 +277,18 @@ const Integration: React.FC = () => {
   }, []);
 
   const getCharacterDisplayName = (character: Character): string => {
-    return character === "musk" ? "Elon Musk" : "Andrew Tate";
+    switch (character) {
+      case "musk":
+        return "Elon Musk";
+      case "tate":
+        return "Andrew Tate";
+      case "trump":
+        return "Donald Trump";
+      case "modi":
+        return "Narendra Modi";
+      default:
+        return "Bot";
+    }
   };
 
   const formatTimeRemaining = (ms: number): string => {
@@ -280,7 +302,7 @@ const Integration: React.FC = () => {
     <Card className="w-full max-w-2xl mx-auto">
       <CardContent className="p-6">
         <div className="mb-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Tesla vs Whey Protein Debate</h2>
+          <h2 className="text-2xl font-bold">{room.topic}</h2>
           <div className="flex items-center gap-4">
             {timeRemaining !== null && (
               <span className="text-sm font-medium">
@@ -304,7 +326,9 @@ const Integration: React.FC = () => {
             <div
               key={message.id}
               className={`flex items-start gap-2 ${
-                message.character === "musk" ? "flex-row" : "flex-row-reverse"
+                message.character === room.bots[0]
+                  ? "flex-row"
+                  : "flex-row-reverse"
               }`}
             >
               <div className="flex-shrink-0">
@@ -314,7 +338,9 @@ const Integration: React.FC = () => {
               </div>
               <div
                 className={`max-w-[80%] rounded-lg p-3 ${
-                  message.character === "musk" ? "bg-blue-100" : "bg-gray-100"
+                  message.character === room.bots[0]
+                    ? "bg-blue-100"
+                    : "bg-gray-100"
                 }`}
               >
                 <div className="font-semibold mb-1">

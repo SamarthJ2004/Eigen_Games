@@ -23,4 +23,4 @@ export interface Message {
   timestamp: string;
 }
 
-export type Character = "musk" | "tate";
+export type Character = "musk" | "tate" | "trump" | "modi";

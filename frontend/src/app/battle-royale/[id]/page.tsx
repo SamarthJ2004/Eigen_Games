@@ -56,20 +56,22 @@ export default function BattleRoyale() {
 
   useEffect(() => {
     const testAgent = async () => {
-      let response = await fetch(API_URL+"/health", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      response = await response.json();
-
-      console.log("First test response: ", response);
+      try {
+        let response = await fetch(API_URL + "/health", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        response = await response.json();
+        console.log("First test response: ", response);
+      } catch (error) {
+        console.error("Error testing agent:", error);
+      }
     };
 
     testAgent();
-  });
+  }, []);
 
   const fetchData = async (roomId: string) => {
     setIsLoading(true);
@@ -158,7 +160,7 @@ export default function BattleRoyale() {
 
           await tx.wait(); // Wait for the transaction to be confirmed
           console.log("Transaction Hash:", tx.hash);
-          toast.success(`Bet placed on Bot ${botNumber}!`);
+          toast.success(`Bet placed on Bot ${room.bots[botNumber - 1]}!`);
           setAmount("");
 
           const txx = await contract.currentFight();
@@ -326,7 +328,7 @@ export default function BattleRoyale() {
               </div>
 
               <div className="p-6">
-                <Integration />
+                <Integration room={room} />
               </div>
             </div>
 
@@ -349,7 +351,7 @@ export default function BattleRoyale() {
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div>
                             <h3 className="text-lg font-semibold text-white">
-                              Bot {botNumber}
+                              {room?.bots[botNumber - 1]}
                             </h3>
                             <p className="text-sm text-blue-300">
                               Win rate: 68%
@@ -379,10 +381,10 @@ export default function BattleRoyale() {
                       {showDetails && (
                         <div className="mt-4 text-sm text-blue-200 bg-blue-900/50 p-4 rounded-lg border border-blue-500/20">
                           <p>
-                            Bot {botNumber} specializes in strategic gameplay
-                            with a focus on resource management. It has won 68
-                            out of 100 matches and is currently on a 5-game
-                            winning streak.
+                            {room?.bots[botNumber - 1]} specializes in strategic
+                            gameplay with a focus on resource management. It has
+                            won 68 out of 100 matches and is currently on a
+                            5-game winning streak.
                           </p>
                         </div>
                       )}
@@ -430,7 +432,7 @@ export default function BattleRoyale() {
                           ) : (
                             <>
                               <DollarSign className="w-5 h-5" />
-                              Bet on Bot {botNumber}
+                              Bet on {room?.bots[botNumber - 1]}
                             </>
                           )}
                         </button>
@@ -469,14 +471,18 @@ export default function BattleRoyale() {
                   </div>
 
                   <div className="p-4 bg-green-900/50 rounded-lg border border-green-500/30">
-                    <h3 className="font-semibold text-green-300 mb-2">Bot 1</h3>
+                    <h3 className="font-semibold text-green-300 mb-2">
+                      {room?.bots[0]}
+                    </h3>
                     <p className="text-2xl font-bold text-white">
                       {bot1 || 0.0}
                     </p>
                   </div>
 
                   <div className="p-4 bg-purple-900/50 rounded-lg border border-purple-500/30">
-                    <h3 className="font-semibold text-purple-300 mb-2">Bot2</h3>
+                    <h3 className="font-semibold text-purple-300 mb-2">
+                      {room?.bots[1]}
+                    </h3>
                     <p className="text-2xl font-bold text-white">
                       {bot2 || 0.0}
                     </p>
