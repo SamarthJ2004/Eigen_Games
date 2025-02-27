@@ -329,7 +329,7 @@ const Integration = ({ room }: { room: IRoom }) => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-5xl mx-auto">
       <CardContent className="p-6">
         <div className="mb-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold">{room?.topic}</h2>
@@ -353,12 +353,12 @@ const Integration = ({ room }: { room: IRoom }) => {
           </Alert>
         )}
 
-        <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
+        <div className="space-y-4 mb-4 max-h-[30rem] overflow-y-auto">
           {messages.map((message, index) => (
             <div
               key={`message-${message.id}-${index}`}
               className={`flex items-start gap-2 ${
-                message.character === room.bots[0]
+                getCharacterDisplayName(message.character) === room.bots[0]
                   ? "flex-row"
                   : "flex-row-reverse"
               }`}
