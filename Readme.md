@@ -164,4 +164,4 @@ This project is licensed under the MIT License.
 - **Eliza Frameworks & Autonome:** For powering our AI agent deployments.
 - **Privy:** For wallet integration and management.
 - **Socket.io:** For enabling real-time chat functionalities.
-- **Arbitrum** For deployment of Contracts.
+  .
