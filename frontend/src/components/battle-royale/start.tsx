@@ -318,6 +318,16 @@ const Integration = ({ room }: { room: IRoom }) => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
+  const extractRoast = (content) => {
+    const roastRegex = /"roast":\s*"([^"]+)"/;
+    const match = content.match(roastRegex);
+
+    if (match && match[1]) {
+      return match[1];
+    }
+    return "Couldn't Parse";
+  };
+
   return (
     <Card className="w-full max-w-5xl mx-auto">
       <CardContent className="p-6">
@@ -360,7 +370,7 @@ const Integration = ({ room }: { room: IRoom }) => {
                 />
               </div>
               <div
-                className={`max-w-[80%] rounded-lg p-3 ${
+                className={`max-w-[70%] rounded-lg p-3 ${
                   message.character === room.bots[0]
                     ? "bg-blue-100"
                     : "bg-gray-100"
@@ -369,7 +379,9 @@ const Integration = ({ room }: { room: IRoom }) => {
                 <div className="font-semibold mb-1">
                   {getCharacterDisplayName(message.character)}
                 </div>
-                <div>{message.content.roast || message.content}</div>
+                <div>
+                  {message.content.roast || extractRoast(message.content)}
+                </div>
                 <div>{JSON.stringify(result)}</div>
               </div>
             </div>
