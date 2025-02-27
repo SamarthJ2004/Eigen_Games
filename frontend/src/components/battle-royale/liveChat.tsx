@@ -128,7 +128,7 @@ export default function LiveChat() {
 
   return (
     <div
-      className={`fixed top-20 right-0 bottom-0 transition-all duration-300 ease-in-out z-50
+      className={`fixed top-16 right-0 bottom-0 transition-all duration-300 ease-in-out z-50
         ${isMinimized ? "w-12" : "w-96"} bg-white shadow-xl border-l border-gray-200`}
       style={{
         transform: isMinimized ? 'translateX(calc(100% - 48px))' : 'translateX(0)'

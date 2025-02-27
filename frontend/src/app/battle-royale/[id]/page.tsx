@@ -160,20 +160,17 @@ export default function BattleRoyale() {
         );
 
         try {
-          // Use a toast ID to manage the toast
           const toastId = toast.loading("Placing bet...");
 
           const tx = await contract.placeBet(botNumber, {
-            value: ethers.utils.parseEther(betAmount), // Convert ETH to wei
+            value: ethers.utils.parseEther(betAmount),
           });
 
           setTxHash(tx.hash);
-          // Update the existing toast
           toast.loading("Transaction pending...", { id: toastId });
 
-          await tx.wait(); // Wait for the transaction to be confirmed
+          await tx.wait();
           console.log("Transaction Hash:", tx.hash);
-          // Update the existing toast
           toast.success(`Bet placed on Bot ${room.bots[botNumber - 1]}!`, {
             id: toastId,
           });
@@ -186,12 +183,10 @@ export default function BattleRoyale() {
 
           const txx = await contract.currentFight();
 
-          // Validate timestamp before conversion
           const timestamp = txx[2] ? Number(txx[2]) : 0;
           const time = new Date(timestamp * 1000).toLocaleString();
           setDuration(time);
 
-          // Add validation for bot amounts
           setBot1(ethers.utils.formatEther(txx[7] || "0"));
           setBot2(ethers.utils.formatEther(txx[8] || "0"));
 
@@ -217,22 +212,17 @@ export default function BattleRoyale() {
 
   return (
     <div className="min-h-screen min-w-2.5 relative overflow-hidden">
-      {/* Funky Background */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        {/* Gradient base */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900 opacity-90"></div>
 
-        {/* Animated circles */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
         <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-yellow-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-6000"></div>
 
-        {/* Grid overlay */}
-        <div className="absolute inset-0 bg-grid-white/10 bg-grid-16 z-10 opacity-20"></div>
+        <div className="absolute inset-0 bg-grid-white/10 bg-grid-16 z-5 opacity-20"></div>
 
-        {/* Cyber pattern */}
-        <div className="absolute inset-0 z-20">
+        <div className="absolute inset-0 z-10">
           <div className="absolute top-1/4 left-1/4 h-32 w-32 border-4 border-blue-400 opacity-20 rotate-45"></div>
           <div className="absolute top-1/2 right-1/3 h-48 w-48 border-4 border-pink-400 opacity-20 rotate-12"></div>
           <div className="absolute bottom-1/3 left-1/2 h-24 w-24 border-4 border-yellow-400 opacity-20 -rotate-12"></div>
@@ -247,17 +237,15 @@ export default function BattleRoyale() {
         display={display}
       />
 
-      <div className="container px-4 mx-auto relative z-10">
-        {/* Mobile chat toggle button */}
+      <div className="container px-4 mx-auto relative z-[5]">
         <button
           onClick={toggleChatVisibility}
-          className="fixed bottom-20 right-6 z-20 md:hidden bg-purple-700 text-white p-3 rounded-full shadow-lg"
+          className="fixed bottom-20 right-6 z-10 md:hidden bg-purple-700 text-white p-3 rounded-full shadow-lg"
         >
           <MessageCircle size={24} />
         </button>
 
         <div className="flex flex-col md:flex-row gap-6 mt-24 mb-12 relative">
-          {/* Main content area */}
           <div
             className={`transition-all duration-300 ease-in-out flex-1 ${
               isChatExpanded ? "md:w-3/5 md:pr-4" : "md:w-3/4"
@@ -270,14 +258,11 @@ export default function BattleRoyale() {
                 : "100%",
             }}
           >
-            {/* Header with animated text */}
-            <div className="mb-8">
-              <div className="mx-auto h-40 ">
-                {" "}
-                {/* style={{ position: "relative", height: "150px" } } */}
+            <div className="my-8">
+              <div className="h-40 flex justify-center">
                 <FuzzyText
-                  baseIntensity={0.15}
-                  hoverIntensity={0.69}
+                  baseIntensity={0.1}
+                  hoverIntensity={0.59}
                   enableHover={true}
                 >
                   Battle Royale!
@@ -285,7 +270,6 @@ export default function BattleRoyale() {
               </div>
             </div>
 
-            {/* Error display */}
             {error && (
               <div className="mb-6 p-4 bg-red-900/70 backdrop-blur-sm border border-red-500 rounded-lg text-red-100">
                 <p className="flex items-center gap-2">
@@ -294,7 +278,6 @@ export default function BattleRoyale() {
               </div>
             )}
 
-            {/* Transaction status */}
             {txHash && (
               <div className="mb-6 p-4 bg-green-900/70 backdrop-blur-sm border border-green-500 rounded-lg text-green-100">
                 <p className="flex items-center gap-2">
@@ -311,7 +294,6 @@ export default function BattleRoyale() {
               </div>
             )}
 
-            {/* Battle area */}
             <div className="bg-gray-900/70 backdrop-blur-md shadow-lg rounded-xl overflow-hidden mb-8 border border-purple-500/30">
               <div className="border-b border-purple-500/30 p-6">
                 <h2 className="text-2xl font-bold text-white">Battle Arena</h2>
@@ -325,7 +307,6 @@ export default function BattleRoyale() {
               </div>
             </div>
 
-            {/* Creator profiles and betting section */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               {[1, 2].map((botNumber) => (
                 <div

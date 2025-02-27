@@ -382,7 +382,6 @@ const Integration = ({ room }: { room: IRoom }) => {
                 <div>
                   {message.content.roast || extractRoast(message.content)}
                 </div>
-                <div>{JSON.stringify(result)}</div>
               </div>
             </div>
           ))}
