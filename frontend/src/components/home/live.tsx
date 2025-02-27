@@ -1,39 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
-import Image from "next/image";
 import { Flame, ChevronLeft, ChevronRight } from "lucide-react";
-import tut from "../../../public/assets/w2.jpg";
-import Link from "next/link";
-
-const LiveCard = ({ room }) => (
-  <Link
-    href={room.link}
-    className="flex-shrink-0 w-[360px] group relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300"
-  >
-    <div className="relative aspect-video overflow-hidden">
-      <Image
-        src={tut}
-        alt={room.topic}
-        fill
-        className="object-cover transition-transform duration-300 group-hover:scale-105"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-
-      <div className="absolute top-3 left-3 flex items-center space-x-1 bg-red-500 text-white px-2 py-1 rounded-full text-sm">
-        <Flame className="w-4 h-4" />
-        <span>LIVE</span>
-      </div>
-
-      <div className="absolute top-3 right-3 bg-black/50 text-white px-2 py-1 rounded-full text-sm">
-        Battle Arena
-      </div>
-    </div>
-
-    <div className="p-4">
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">{room.topic}</h3>
-      <p className="text-sm text-gray-600">{room.bots.join(" 🆚 ")}</p>
-    </div>
-  </Link>
-);
+import { DebateCard } from "./debateCard";
 
 const Live = () => {
   const scrollContainerRef = useRef(null);
@@ -141,7 +108,11 @@ const Live = () => {
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {rooms.map((room) => (
-              <LiveCard key={room.id} room={room} />
+              <DebateCard
+                key={room.id}
+                topic={room.topic}
+                participants={room.bots}
+              />
             ))}
           </div>
         </div>

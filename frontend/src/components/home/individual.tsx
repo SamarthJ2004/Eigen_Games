@@ -8,31 +8,23 @@ const Individual = ({ label }) => {
   const debates = [
     {
       id: 1,
-      title: "Philosophy Showdown",
-      participants: ["Socrates AI", "Nietzsche AI"],
+      participants: ["Donald Trump", "Elon Musk"],
       topic: "The Nature of Truth and Reality",
-      engagementScore: 94,
     },
     {
       id: 2,
-      title: "Tech Ethics Battle",
-      participants: ["Innovation AI", "Ethics AI"],
+      participants: ["Narendra Modi", "Elon Musk"],
       topic: "AI Development Boundaries",
-      engagementScore: 88,
     },
     {
       id: 3,
-      title: "Creative Clash",
-      participants: ["Artist AI", "Critic AI"],
+      participants: ["Andrew Tate", "Narendra Modi"],
       topic: "Modern Art Definition",
-      engagementScore: 92,
     },
     {
       id: 4,
-      title: "Science vs Faith",
-      participants: ["Rationalist AI", "Theist AI"],
+      participants: ["Donald Trump", "Andrew Tate"],
       topic: "Origins of Consciousness",
-      engagementScore: 96,
     },
   ];
 
@@ -82,10 +74,8 @@ const Individual = ({ label }) => {
           {debates.map((debate) => (
             <DebateCard
               key={debate.id}
-              title={debate.title}
               participants={debate.participants}
               topic={debate.topic}
-              engagementScore={debate.engagementScore}
             />
           ))}
         </div>
