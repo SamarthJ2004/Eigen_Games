@@ -27,7 +27,8 @@ export default function BattleRoyale() {
   const [selectedBot, setSelectedBot] = useState<string | number>("");
   const [txHash, setTxHash] = useState("");
   const [room, setRoom] = useState<IRoom>();
-  const [amount, setAmount] = useState("");
+  const [amount1, setAmount1] = useState("");
+  const [amount2, setAmount2] = useState("");
   const [provider, setProvider] =
     useState<ethers.providers.Web3Provider | null>(null);
   const [userAddress, setUserAddress] = useState<string | null>(null);
@@ -96,15 +97,17 @@ export default function BattleRoyale() {
     } catch (error) {
       console.error("Error fetching room:", error);
       setError(error instanceof Error ? error.message : "Failed to load room");
-      setRoom(undefined);
+      setRoom(room);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Connect MetaMask wallet
   const connectWallet = async () => {
-    if (typeof window.ethereum === "undefined") {
+    if (
+      typeof window === "undefined" ||
+      typeof window.ethereum === "undefined"
+    ) {
       setError("Please install MetaMask to continue.");
       return;
     }
@@ -114,6 +117,11 @@ export default function BattleRoyale() {
       const accounts = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No accounts available");
+      }
+
       setUserAddress(accounts[0]);
       setProvider(web3Provider);
       setError("");
@@ -126,12 +134,14 @@ export default function BattleRoyale() {
   };
 
   async function sendTransaction(botNumber: number) {
+    const betAmount = botNumber === 1 ? amount1 : amount2;
+
     if (!provider || !userAddress) {
       toast.error("Wallet not connected");
       throw new Error("Wallet not connected");
     }
 
-    if (!amount || parseFloat(amount) <= 0) {
+    if (!betAmount || parseFloat(betAmount) <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
@@ -150,25 +160,40 @@ export default function BattleRoyale() {
         );
 
         try {
-          toast.loading("Placing bet...");
+          // Use a toast ID to manage the toast
+          const toastId = toast.loading("Placing bet...");
+
           const tx = await contract.placeBet(botNumber, {
-            value: ethers.utils.parseEther(amount), // Convert ETH to wei
+            value: ethers.utils.parseEther(betAmount), // Convert ETH to wei
           });
 
           setTxHash(tx.hash);
-          toast.loading("Transaction pending...");
+          // Update the existing toast
+          toast.loading("Transaction pending...", { id: toastId });
 
           await tx.wait(); // Wait for the transaction to be confirmed
           console.log("Transaction Hash:", tx.hash);
-          toast.success(`Bet placed on Bot ${room.bots[botNumber - 1]}!`);
-          setAmount("");
+          // Update the existing toast
+          toast.success(`Bet placed on Bot ${room.bots[botNumber - 1]}!`, {
+            id: toastId,
+          });
+
+          if (botNumber === 1) {
+            setAmount1("");
+          } else {
+            setAmount2("");
+          }
 
           const txx = await contract.currentFight();
 
-          const time = new Date(txx[2] * 1000).toLocaleString();
+          // Validate timestamp before conversion
+          const timestamp = txx[2] ? Number(txx[2]) : 0;
+          const time = new Date(timestamp * 1000).toLocaleString();
           setDuration(time);
-          setBot1(ethers.utils.formatEther(txx[7]));
-          setBot2(ethers.utils.formatEther(txx[8]));
+
+          // Add validation for bot amounts
+          setBot1(ethers.utils.formatEther(txx[7] || "0"));
+          setBot2(ethers.utils.formatEther(txx[8] || "0"));
 
           console.log("currentFight ", txx);
         } catch (error) {
@@ -185,38 +210,6 @@ export default function BattleRoyale() {
       setIsLoading(false);
     }
   }
-
-  async function getDuration() {
-    if (!provider || !userAddress) {
-      toast.error("Wallet not connected");
-      throw new Error("Wallet not connected");
-    }
-
-    try {
-      const signer = provider.getSigner();
-      if (room?.contractAddress) {
-        const contract = new ethers.Contract(
-          room.contractAddress,
-          contractABI,
-          signer
-        );
-        const tx = await contract.currentFight();
-        setDuration(tx[2]);
-        setBot1(tx[7]);
-        setBot2(tx[8]);
-        try {
-        } catch (error) {
-          console.error("Contract address not found", error);
-        }
-      }
-    } catch (error) {
-      console.error("Error in getDuration ", error);
-    }
-  }
-
-  const toggleChatExpansion = () => {
-    setIsChatExpanded(!isChatExpanded);
-  };
 
   const toggleChatVisibility = () => {
     setIsChatVisible(!isChatVisible);
@@ -402,13 +395,15 @@ export default function BattleRoyale() {
                           <input
                             id={`amount-${botNumber}`}
                             type="text"
-                            value={amount}
+                            value={botNumber == 1 ? amount1 : amount2}
                             onChange={(e) => {
                               const value = e.target.value.replace(
                                 /[^0-9.]/g,
                                 ""
                               );
-                              setAmount(value);
+
+                              if (botNumber == 1) setAmount1(value);
+                              else setAmount2(value);
                             }}
                             placeholder="0.05"
                             className="px-4 py-2 border border-blue-500/30 bg-blue-900/30 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-white"

@@ -5,14 +5,7 @@ import { MessageCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { usePrivy } from "@privy-io/react-auth";
 import { ethers } from "ethers";
-import {
-  APIContext,
-  APIMessage,
-  APIResponse,
-  Message,
-  Character,
-} from "@/lib/utils/types/start";
-import { contractABI } from "@/lib/utils/constants/room";
+import { APIResponse, Message, Character } from "@/lib/utils/types/start";
 import "dotenv/config";
 import { IRoom } from "@/lib/db/models/Room";
 
@@ -21,7 +14,7 @@ const POLLING_INTERVAL = 15000;
 const DEBATE_DURATION = 180000;
 const TIMER_INTERVAL = 1000;
 
-const Integration = (room: IRoom) => {
+const Integration = ({ room }: { room: IRoom }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +69,6 @@ const Integration = (room: IRoom) => {
       if (data.evaluation) {
         setResult(data.evaluation);
       } else {
-        // If no evaluation yet, retry after a short delay
         setTimeout(fetchEvaluation, 2000);
       }
     } catch (error) {
@@ -116,11 +108,9 @@ const Integration = (room: IRoom) => {
       setTimeRemaining(data.context.timeRemaining);
       setDebateStatus(data.context.status);
 
-      // Only update lastCharacter if it's different from current
       console.log("data.context.lastCharacter", data.context.lastCharacter);
       console.log("lastCharacterRef.current", lastCharacterRef.current);
       if (data.context.lastCharacter !== lastCharacterRef.current) {
-        // setLastCharacter(data.context.lastCharacter);
         lastCharacterRef.current = data.context.lastCharacter;
         console.log("data.context.lastCharacter", data.context.lastCharacter);
       }
@@ -134,7 +124,6 @@ const Integration = (room: IRoom) => {
             timestamp: new Date().toISOString(),
           };
 
-          // Check if this message is already in the list to avoid duplicates
           const isDuplicate = prev.some(
             (msg) => msg.content === newMessage.content
           );
@@ -143,7 +132,6 @@ const Integration = (room: IRoom) => {
           }
 
           if (!isDuplicate) {
-            // After adding a message, alternate the lastCharacter for next request
             lastCharacterRef.current =
               lastCharacterRef.current === "musk" ? "tate" : "musk";
             return [...prev, newMessage];
@@ -156,7 +144,12 @@ const Integration = (room: IRoom) => {
     [lastCharacter, lastCharacterRef]
   );
 
-  const giveBots = (characters) => {
+  const giveBots = (characters: string[]) => {
+    if (!characters || !Array.isArray(characters)) {
+      console.error("Invalid characters array:", characters);
+      return ["bot1", "bot2"];
+    }
+
     return characters.map((name) => {
       const nameParts = name.split(" ");
       const lastName = nameParts[nameParts.length - 1];
@@ -170,14 +163,17 @@ const Integration = (room: IRoom) => {
       return;
     }
 
-    try {
-      //   const nextCharacter = lastCharacterRef.current === "musk" ? "tate" : "musk";
-      //   lastCharacterRef.current = nextCharacter;
+    if (!room || !room.bots) {
+      console.error("Room data is undefined or missing bots array");
+      return;
+    }
 
-      console.log("inside pollDebateStatus ");
+    try {
       console.log("lastCharacterRef.current ", lastCharacterRef.current);
       console.log("DebateId", debateIdRef.current);
+
       const bots = giveBots(room.bots);
+
       const data = (await makeApiRequest(API_URL + "/message", {
         method: "POST",
         body: JSON.stringify({
@@ -200,14 +196,31 @@ const Integration = (room: IRoom) => {
       setError(errorMessage);
       console.error(err);
     }
-  }, [updateDebateState]);
+  }, [updateDebateState, room]);
 
   const initializeDebate = async (): Promise<void> => {
+    // Check if room data is defined and has the necessary properties
+    if (!room || !room.bots || !Array.isArray(room.bots) || !room.topic) {
+      setError("Room data is not available or incomplete");
+      console.error(
+        "Cannot initialize debate: Room data is missing or incomplete",
+        room
+      );
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
       const bots = giveBots(room.bots);
+
+      // Additional validation for bots
+      if (!bots || bots.length < 2) {
+        throw new Error("At least two bots are required for a debate");
+      }
+
       lastCharacterRef.current = bots[0] as Character;
+
       const data = (await makeApiRequest(API_URL + "/message", {
         method: "POST",
         body: JSON.stringify({
@@ -217,64 +230,81 @@ const Integration = (room: IRoom) => {
         }),
       })) as APIResponse;
 
-      if (data.context.debateId) {
+      if (data?.context?.debateId) {
         debateIdRef.current = data.context.debateId;
-        // setDebateId(data.context.debateId);
-        // console.log(debateIdRef, " hihaa ", data.context.debateId);
-        // updateDebateState(data);
         startPollingAndTimer();
         debateStatusRef.current = "active";
+      } else {
+        throw new Error("No debate ID received from the server");
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to initialize debate";
       setError(errorMessage);
-      console.error(err);
+      console.error("Debate initialization error:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   const startPollingAndTimer = useCallback(() => {
-    // Clear existing intervals if any
-    if (messagePollingRef.current) clearInterval(messagePollingRef.current);
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (debateTimerRef.current) clearTimeout(debateTimerRef.current);
+    if (!room || !room.bots || room.bots.length < 2) {
+      console.error("Cannot start polling: Room data is missing or incomplete");
+      setError("Room data is incomplete or unavailable");
+      return;
+    }
 
-    setDebateEnded(false); // Reset debate ended state
-    setResult(""); // Reset result
+    [
+      messagePollingRef.current,
+      timerRef.current,
+      debateTimerRef.current,
+    ].forEach((timer) => {
+      if (timer) {
+        clearInterval(timer);
+        clearTimeout(timer);
+      }
+    });
+
+    setDebateEnded(false);
+    setResult("");
     setTimeRemaining(DEBATE_DURATION);
 
-    // Start message polling
     messagePollingRef.current = setInterval(async () => {
       if (!debateEnded) {
         await pollDebateStatus();
       }
     }, POLLING_INTERVAL);
 
-    // Start local timer
-    timerRef.current = setInterval(() => {
-      updateLocalTimer();
-    }, TIMER_INTERVAL);
+    timerRef.current = setInterval(updateLocalTimer, TIMER_INTERVAL);
 
-    // Set timeout to end debate after DEBATE_DURATION
     debateTimerRef.current = setTimeout(() => {
       setDebateEnded(true);
+
       if (messagePollingRef.current) clearInterval(messagePollingRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
+
       fetchEvaluation();
     }, DEBATE_DURATION);
-  }, [pollDebateStatus, updateLocalTimer, debateEnded]);
+  }, [pollDebateStatus, updateLocalTimer, debateEnded, room]);
 
   useEffect(() => {
-    initializeDebate();
+    console.log("room: ", room);
+    if (room) {
+      console.log("Initializing debate with room data:", {
+        topic: room.topic,
+        bots: room.bots,
+      });
+      initializeDebate();
+    } else {
+      console.log("Waiting for complete room data before initializing debate");
+    }
 
     return () => {
       if (messagePollingRef.current) clearInterval(messagePollingRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
       if (debateTimerRef.current) clearTimeout(debateTimerRef.current);
     };
-  }, []);
+  }, [room]);
 
   const getCharacterDisplayName = (character: Character): string => {
     switch (character) {
@@ -302,7 +332,7 @@ const Integration = (room: IRoom) => {
     <Card className="w-full max-w-2xl mx-auto">
       <CardContent className="p-6">
         <div className="mb-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold">{room.topic}</h2>
+          <h2 className="text-2xl font-bold">{room?.topic}</h2>
           <div className="flex items-center gap-4">
             {timeRemaining !== null && (
               <span className="text-sm font-medium">
@@ -316,15 +346,17 @@ const Integration = (room: IRoom) => {
           <Alert className="mb-4">
             <AlertDescription>
               Debate has ended!{" "}
-              {result && <div className="mt-2">Result: {result}</div>}
+              {result && (
+                <div className="mt-2">Result: {JSON.stringify(result)}</div>
+              )}
             </AlertDescription>
           </Alert>
         )}
 
         <div className="space-y-4 mb-4 max-h-96 overflow-y-auto">
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <div
-              key={message.id}
+              key={`message-${message.id}-${index}`}
               className={`flex items-start gap-2 ${
                 message.character === room.bots[0]
                   ? "flex-row"
@@ -346,8 +378,8 @@ const Integration = (room: IRoom) => {
                 <div className="font-semibold mb-1">
                   {getCharacterDisplayName(message.character)}
                 </div>
-                <div>{message.content}</div>
-                <div>{result}</div>
+                <div>{message.content.roast || message.content}</div>
+                <div>{JSON.stringify(result)}</div>
               </div>
             </div>
           ))}

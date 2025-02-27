@@ -13,14 +13,14 @@ import {
 import Navbar from "@/components/common-components/navbar";
 import { usePrivy } from "@privy-io/react-auth";
 import Footer from "@/components/common-components/footer";
-import  { useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Room() {
   const { login, logout, user, ready } = usePrivy();
   const [display, setDisplay] = useState(false);
 
   const [rooms, setRooms] = useState<IRoom[]>([]);
-  const [bot1, setBot1] = useState<string>("Elon Mush");
+  const [bot1, setBot1] = useState<string>("Elon Musk");
   const [bot2, setBot2] = useState<string>("Narendra Modi");
   const [topic, setTopic] = useState<string>("");
   const [error, setError] = useState<string>("");
@@ -28,7 +28,7 @@ export default function Room() {
   const [userAddress, setUserAddress] = useState<string | null>(null);
   const [provider, setProvider] =
     useState<ethers.providers.Web3Provider | null>(null);
-  
+
   const router = useRouter();
 
   // Connect wallet on component mount
