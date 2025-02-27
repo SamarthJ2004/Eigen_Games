@@ -20,8 +20,8 @@ export default function Room() {
   const [display, setDisplay] = useState(false);
 
   const [rooms, setRooms] = useState<IRoom[]>([]);
-  const [bot1, setBot1] = useState<string>("");
-  const [bot2, setBot2] = useState<string>("");
+  const [bot1, setBot1] = useState<string>("Elon Mush");
+  const [bot2, setBot2] = useState<string>("Narendra Modi");
   const [topic, setTopic] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);

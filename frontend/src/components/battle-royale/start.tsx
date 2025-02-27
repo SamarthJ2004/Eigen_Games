@@ -15,7 +15,7 @@ import {
 import {contractABI} from "@/lib/utils/constants/room";
 import "dotenv/config";
 
-const API_URL = process.env.NEXT_PUBLIC_AUTONOME_API;
+const API_URL = process.env.NEXT_PUBLIC_AUTONOME_API || "";
 const POLLING_INTERVAL = 15000;
 const DEBATE_DURATION = 180000;
 const TIMER_INTERVAL = 1000;
@@ -169,7 +169,7 @@ const Integration: React.FC = () => {
       console.log("inside pollDebateStatus ");
       console.log("lastCharacterRef.current ", lastCharacterRef.current);
       console.log("DebateId", debateIdRef.current);
-      const data = (await makeApiRequest(API_URL, {
+      const data = (await makeApiRequest(API_URL+"/message", {
         method: "POST",
         body: JSON.stringify({
           text: "",
@@ -197,7 +197,7 @@ const Integration: React.FC = () => {
       setIsLoading(true);
       setError(null);
       lastCharacterRef.current = "musk";
-      const data = (await makeApiRequest(API_URL, {
+      const data = (await makeApiRequest(API_URL+"/message", {
         method: "POST",
         body: JSON.stringify({
           text: "Tesla vs Whey Protein",
