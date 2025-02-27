@@ -17,12 +17,8 @@ const TIMER_INTERVAL = 1000;
 const Integration = ({ room }: { room: IRoom }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [lastCharacter, setLastCharacter] = useState<Character | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const [debateStatus, setDebateStatus] = useState<
-    "active" | "completed" | null
-  >(null);
   const [result, setResult] = useState("");
 
   const messagePollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -34,21 +30,15 @@ const Integration = ({ room }: { room: IRoom }) => {
   const lastCharacterRef = useRef<Character | null>(null);
   const [debateEnded, setDebateEnded] = useState(false);
   const debateTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const { login, logout, user, ready } = usePrivy();
-  const [userAddress, setUserAddress] = useState<string | null>(null);
-  const [provider, setProvider] =
-    useState<ethers.providers.Web3Provider | null>(null);
 
   const updateLocalTimer = useCallback(() => {
     setTimeRemaining((prev) => {
       if (prev === null || prev <= 0) {
         if (!debateEnded) {
           setDebateEnded(true);
-          // Clear all intervals when timer reaches 0
           if (messagePollingRef.current)
             clearInterval(messagePollingRef.current);
           if (timerRef.current) clearInterval(timerRef.current);
-          // Fetch the result with retry logic
           fetchEvaluation();
         }
         return 0;
@@ -59,7 +49,6 @@ const Integration = ({ room }: { room: IRoom }) => {
 
   const fetchEvaluation = async () => {
     try {
-      // Add a small delay to ensure the debate has been processed
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const res = await fetch(
@@ -73,7 +62,6 @@ const Integration = ({ room }: { room: IRoom }) => {
       }
     } catch (error) {
       console.error("Error fetching evaluation:", error);
-      // Retry on error
       setTimeout(fetchEvaluation, 2000);
     }
   };
@@ -106,7 +94,6 @@ const Integration = ({ room }: { room: IRoom }) => {
       serverTimeRef.current = data.context.timeRemaining;
 
       setTimeRemaining(data.context.timeRemaining);
-      setDebateStatus(data.context.status);
 
       console.log("data.context.lastCharacter", data.context.lastCharacter);
       console.log("lastCharacterRef.current", lastCharacterRef.current);
@@ -141,7 +128,7 @@ const Integration = ({ room }: { room: IRoom }) => {
         });
       }
     },
-    [lastCharacter, lastCharacterRef]
+    [lastCharacterRef]
   );
 
   const giveBots = (characters: string[]) => {
@@ -191,9 +178,6 @@ const Integration = ({ room }: { room: IRoom }) => {
       console.log("caling updateDebateState");
       updateDebateState(data);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to generate response";
-      setError(errorMessage);
       console.error(err);
     }
   }, [updateDebateState, room]);
@@ -201,7 +185,6 @@ const Integration = ({ room }: { room: IRoom }) => {
   const initializeDebate = async (): Promise<void> => {
     // Check if room data is defined and has the necessary properties
     if (!room || !room.bots || !Array.isArray(room.bots) || !room.topic) {
-      setError("Room data is not available or incomplete");
       console.error(
         "Cannot initialize debate: Room data is missing or incomplete",
         room
@@ -211,7 +194,6 @@ const Integration = ({ room }: { room: IRoom }) => {
 
     try {
       setIsLoading(true);
-      setError(null);
       const bots = giveBots(room.bots);
 
       // Additional validation for bots
@@ -238,9 +220,6 @@ const Integration = ({ room }: { room: IRoom }) => {
         throw new Error("No debate ID received from the server");
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to initialize debate";
-      setError(errorMessage);
       console.error("Debate initialization error:", err);
     } finally {
       setIsLoading(false);
@@ -250,7 +229,6 @@ const Integration = ({ room }: { room: IRoom }) => {
   const startPollingAndTimer = useCallback(() => {
     if (!room || !room.bots || room.bots.length < 2) {
       console.error("Cannot start polling: Room data is missing or incomplete");
-      setError("Room data is incomplete or unavailable");
       return;
     }
 
