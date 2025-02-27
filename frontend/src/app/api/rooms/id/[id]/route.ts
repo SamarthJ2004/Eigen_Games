@@ -6,7 +6,6 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log("hih")
     const id = (await params).id;
 
     if (!id) {
@@ -17,7 +16,7 @@ export async function GET(
     }
 
     const rooms = await getRoomById(id);
-    console.log("hihah  ", rooms)
+    console.log("rooms: ", rooms);
     return NextResponse.json(rooms);
   } catch (error) {
     console.error("Error fetching rooms:", error);

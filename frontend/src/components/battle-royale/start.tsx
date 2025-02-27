@@ -1,13 +1,15 @@
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { MessageCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { usePrivy } from "@privy-io/react-auth";
-import { ethers } from "ethers";
 import { APIResponse, Message, Character } from "@/lib/utils/types/start";
 import "dotenv/config";
 import { IRoom } from "@/lib/db/models/Room";
+import Image from "next/image";
+import modi from "@/assets/modi.png";
+import trump from "@/assets/trump.png";
+import tate from "@/assets/tate.png";
+import musk from "@/assets/musk.png";
 
 const API_URL = process.env.NEXT_PUBLIC_AUTONOME_API || "";
 const POLLING_INTERVAL = 15000;
@@ -17,7 +19,6 @@ const TIMER_INTERVAL = 1000;
 const Integration = ({ room }: { room: IRoom }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [lastCharacter, setLastCharacter] = useState<Character | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [result, setResult] = useState("");
 
@@ -183,7 +184,6 @@ const Integration = ({ room }: { room: IRoom }) => {
   }, [updateDebateState, room]);
 
   const initializeDebate = async (): Promise<void> => {
-    // Check if room data is defined and has the necessary properties
     if (!room || !room.bots || !Array.isArray(room.bots) || !room.topic) {
       console.error(
         "Cannot initialize debate: Room data is missing or incomplete",
@@ -196,7 +196,6 @@ const Integration = ({ room }: { room: IRoom }) => {
       setIsLoading(true);
       const bots = giveBots(room.bots);
 
-      // Additional validation for bots
       if (!bots || bots.length < 2) {
         throw new Error("At least two bots are required for a debate");
       }
@@ -299,6 +298,19 @@ const Integration = ({ room }: { room: IRoom }) => {
     }
   };
 
+  const getImage = (character) => {
+    switch (character) {
+      case "Narendra Modi":
+        return modi;
+      case "Donald Trump":
+        return trump;
+      case "Andrew Tate":
+        return tate;
+      case "Elon Musk":
+        return musk;
+    }
+  };
+
   const formatTimeRemaining = (ms: number): string => {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
@@ -341,10 +353,11 @@ const Integration = ({ room }: { room: IRoom }) => {
                   : "flex-row-reverse"
               }`}
             >
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-4 h-4" />
-                </div>
+              <div className="w-12 h-12 rounded-full bg-blue-100 mx-4 mt-4 ring-4 ring-blue-200 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
+                <Image
+                  src={getImage(getCharacterDisplayName(message.character))}
+                  alt={message.character}
+                />
               </div>
               <div
                 className={`max-w-[80%] rounded-lg p-3 ${
