@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
   Heart,
   DollarSign,
@@ -17,7 +17,12 @@ import Integration from "@/components/battle-royale/start";
 import { contractABI } from "@/lib/utils/constants/room";
 import { usePrivy } from "@privy-io/react-auth";
 import Navbar from "@/components/common-components/navbar";
+import Image from "next/image";
 import toast from "react-hot-toast";
+import modi from "@/assets/modi.png";
+import trump from "@/assets/trump.png";
+import tate from "@/assets/tate.png";
+import musk from "@/assets/musk.png";
 
 export default function BattleRoyale() {
   const { login, logout, user, ready } = usePrivy();
@@ -210,6 +215,19 @@ export default function BattleRoyale() {
     setIsChatVisible(!isChatVisible);
   };
 
+  const getImage = (character) => {
+    switch (character) {
+      case "Narendra Modi":
+        return modi;
+      case "Donald Trump":
+        return trump;
+      case "Andrew Tate":
+        return tate;
+      case "Elon Musk":
+        return musk;
+    }
+  };
+
   return (
     <div className="min-h-screen min-w-2.5 relative overflow-hidden">
       <div className="absolute inset-0 z-0 overflow-hidden">
@@ -315,10 +333,12 @@ export default function BattleRoyale() {
                 >
                   <div className="p-6">
                     <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/20">
-                          {`B${botNumber}`}
-                        </div>
+                      <div className="w-16 h-16 rounded-full bg-blue-100  mx-4 mt-2 ring-4 ring-blue-200 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
+                        <Image
+                          src={room ? getImage(room.bots[botNumber - 1]) : modi}
+                          alt="image"
+                          width={80}
+                        />
                       </div>
 
                       <div className="flex-grow">
@@ -474,7 +494,7 @@ export default function BattleRoyale() {
       </div>
 
       {/* Wallet connection status */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-16 right-6 z-50">
         <div
           className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-lg backdrop-blur-md border ${
             userAddress

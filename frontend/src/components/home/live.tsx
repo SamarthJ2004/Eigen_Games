@@ -112,6 +112,7 @@ const Live = () => {
                 key={room.id}
                 topic={room.topic}
                 participants={room.bots}
+                link = {room.link}
               />
             ))}
           </div>
